@@ -1,29 +1,31 @@
-import {
-	env,
-	createExecutionContext,
-	waitOnExecutionContext,
-	SELF,
-} from "cloudflare:test";
-import { describe, it, expect } from "vitest";
-import worker from "../src/index";
+import { httpServerHandler } from "cloudflare:node";
+import express from "express";
 
-// For now, you'll need to do something like this to get a correctly-typed
-// `Request` to pass to `worker.fetch()`.
-const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
+const app = express();
 
-describe("Hello World worker", () => {
-	it("responds with Hello World! (unit style)", async () => {
-		const request = new IncomingRequest("http://example.com");
-		// Create an empty context to pass to `worker.fetch()`.
-		const ctx = createExecutionContext();
-		const response = await worker.fetch(request, env, ctx);
-		// Wait for all `Promise`s passed to `ctx.waitUntil()` to settle before running test assertions
-		await waitOnExecutionContext(ctx);
-		expect(await response.text()).toMatchInlineSnapshot(`"Hello World!"`);
-	});
-
-	it("responds with Hello World! (integration style)", async () => {
-		const response = await SELF.fetch("https://example.com");
-		expect(await response.text()).toMatchInlineSnapshot(`"Hello World!"`);
+app.get("/", (req, res) => {
+	res.json({
+		message: "Hello Express on Cloudflare Workers!"
 	});
 });
+
+app.get("/api/status", (req, res) => {
+	res.json({
+		status: "ok",
+		subject: "PaaS",
+		week: 5,
+		platform: "Cloudflare Workers"
+	});
+});
+
+app.get("/api/info", (req, res) => {
+	res.json({
+		framework: "Express",
+		runtime: "Cloudflare Workers",
+		course: "Platform as a Service"
+	});
+});
+
+app.listen(3000);
+
+export default httpServerHandler({ port: 3000 });
